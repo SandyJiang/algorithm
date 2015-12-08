@@ -1,7 +1,12 @@
 package js.com.simple_question
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
 	三个线程，第一个线程打印1,2,3,4,5，第二个线程6,7,8,9,10，这样，打印结果为
@@ -22,51 +27,35 @@ import java.util.concurrent.Executors;
 	Thread[pool-1-thread-3,5,main]71 72 73 74 75 
  */
 public class CurrentAlternatePrintTest {
-    public static void main(String[] args) {
-        ExecutorService exec = Executors.newCachedThreadPool();
-        Worker w = new Worker();
-        for (int i = 0; i < 3; i++)
-            exec.execute(new Task(w,i));
-    }
-}
+    private static final int TASK_NUM = 3;
+    private static int num = 0;
+    private static int flag = 0;
+    private static Lock lock = new ReentrantLock();
+    private static List<Condition> list = new ArrayList<Condition>();
+    private static ExecutorService exec = Executors.newCachedThreadPool();
 
-
-class Worker {
-    private  final int TASK_NUM = 3;
-    private  int num = 0;
-    private  int flag = 0;
-    private  Lock lock = new ReentrantLock();
-    private  List<Condition> list = new ArrayList<Condition>();
-    private  ExecutorService exec = Executors.newCachedThreadPool();
-
-     {
+    static {
         for (int i = 0; i < TASK_NUM; i++) {
             list.add(lock.newCondition());
         }
     }
 
-    private  void crit() {
+    private static void crit() {
         if (num >= 75) {
             System.exit(1);
         }
     }
 
-    private  void print() {
+    private static void print() {
+        crit();
         System.out.print(Thread.currentThread());
         for (int i = 0; i < 5; i++) {
             System.out.format("%-2d ", ++num);
         }
-
         System.out.println();
-        try {
-            Random r= new Random(System.currentTimeMillis());
-            Thread.sleep((r.nextInt(10)+1)*100);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
-    public  void work(int i) {
+    private static void work(int i) {
         while (!Thread.interrupted()) {
             try {
                 lock.lock();
@@ -87,22 +76,27 @@ class Worker {
             }
         }
     }
-}
 
-public Task implements Runnable {
-    Worker w;
-    final private int i;
-    Task(Worker w,int i){
-        this.w = w;
-        this.i = i;
-    }
+    private static class Task implements Runnable {
+        private final int i;
 
+        public Task(int i) {
+            this.i = i;
+        }
 
-
-    public void run() {
-       w.work(i);
+        public void run() {
+            work(i);
+        }
 
     }
 
-}
+    /**
+     * @param args
+     */
+    public static void main(String[] args) {
+        for (int i = 0; i < list.size(); i++)
+            exec.execute(new Task(i));
+    }
+
+}  
 
