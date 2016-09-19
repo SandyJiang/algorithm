@@ -1,4 +1,4 @@
-package js.com.simple_question
+package js.com.simple_question;
 
 import java.util.ArrayList;
 import java.util.List;
