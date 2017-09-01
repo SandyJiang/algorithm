@@ -9,11 +9,11 @@ public class QuickSort {
     public static int getMiddle(Integer[] list, int low, int high) {
         int tmp = list[low];    //数组的第一个作为中轴
         while (low < high) {
-            while (low < high && list[high] > tmp) {
+            while (low < high && list[high] >= tmp) {
                 high--;
             }
             list[low] = list[high];   //比中轴小的记录移到低端
-            while (low < high && list[low] < tmp) {
+            while (low < high && list[low] <= tmp) {
                 low++;
             }
             list[high] = list[low];   //比中轴大的记录移到高端
